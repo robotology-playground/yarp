@@ -84,7 +84,10 @@ bool ImplementTorqueControl::getBemfParam(int j, double *bemf)
     int k;
     bool ret;
     k=castToMapper(helper)->toHw(j);
+    //from machine units to [Nm/deg]
     ret = iTorqueRaw->getBemfParamRaw(k, bemf);
+    *bemf = *bemf/castToMapper(helper)->newtonsToSensors[j];
+    *bemf = *bemf*castToMapper(helper)->angleToEncoders[j];
     return ret;
 }
 
@@ -93,6 +96,9 @@ bool ImplementTorqueControl::setBemfParam(int j, double bemf)
     int k;
     bool ret;
     k=castToMapper(helper)->toHw(j);
+    //from [Nm/deg] to machine units
+    bemf = bemf*castToMapper(helper)->newtonsToSensors[j];
+    bemf = bemf/castToMapper(helper)->angleToEncoders[j];
     ret = iTorqueRaw->setBemfParamRaw(k, bemf);
     return ret;
 }
@@ -101,13 +107,29 @@ bool ImplementTorqueControl::setMotorTorqueParams(int j,  const yarp::dev::Motor
 {
     int k;
     k=castToMapper(helper)->toHw(j);
-    return iTorqueRaw->setMotorTorqueParamsRaw(k, params);
+    yarp::dev::MotorTorqueParameters hwParams=params;
+    //from [Nm/deg] to machine units
+    hwParams.bemf = hwParams.bemf*castToMapper(helper)->newtonsToSensors[j];
+    hwParams.bemf = hwParams.bemf/castToMapper(helper)->angleToEncoders[j];
+    //from [1/Nm] to machine units
+    hwParams.ktau = hwParams.ktau/castToMapper(helper)->newtonsToSensors[j];
+    bool ret = iTorqueRaw->setMotorTorqueParamsRaw(k, hwParams);
+    return ret;
 }
 
 bool ImplementTorqueControl::getMotorTorqueParams(int j,  yarp::dev::MotorTorqueParameters *params) 
 {
-  int k=castToMapper(helper)->toHw(j);
-  return iTorqueRaw->getMotorTorqueParamsRaw(k, params);
+    int k;
+    k=castToMapper(helper)->toHw(j);
+    yarp::dev::MotorTorqueParameters hwParams;
+    bool ret = iTorqueRaw->getMotorTorqueParamsRaw(k, &hwParams);
+    *params=hwParams;
+    //from  machine units to [Nm/deg]
+    params->bemf = params->bemf*castToMapper(helper)->angleToEncoders[j];
+    params->bemf = params->bemf/castToMapper(helper)->newtonsToSensors[j];
+    //from  machine units to [1/Nm]
+    params->ktau = params->ktau*castToMapper(helper)->newtonsToSensors[j];
+    return ret;
 }
 
 bool ImplementTorqueControl::getRefTorques(double *t)
