@@ -33,7 +33,7 @@ bool ImplementMotorEncoders:: initialize (int size, const int *amap, const doubl
     if (helper!=0)
         return false;
     
-    helper=(void *)(new ControlBoardHelper(size, amap, enc, zos,0));
+    helper=(void *)(new ControlBoardHelper(size, amap, enc, zos,0,0));
     yAssert (helper != 0);
     temp=new double [size];
     yAssert (temp != 0);

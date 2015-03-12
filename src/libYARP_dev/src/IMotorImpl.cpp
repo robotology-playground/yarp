@@ -33,7 +33,7 @@ bool ImplementMotor:: initialize (int size, const int *amap)
     if (helper!=0)
         return false;
     
-    helper=(void *)(new ControlBoardHelper(size, amap, 0, 0, 0));
+    helper=(void *)(new ControlBoardHelper(size, amap, 0, 0, 0, 0));
     yAssert (helper != 0);
     temp1=new double [size];
     yAssert (temp1 != 0);

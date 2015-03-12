@@ -27,12 +27,12 @@ ImplementTorqueControl::~ImplementTorqueControl()
     uninitialize();
 }
 
-bool ImplementTorqueControl::initialize(int size, const int *amap, const double *enc, const double *zos, const double *nw)
+bool ImplementTorqueControl::initialize(int size, const int *amap, const double *enc, const double *zos, const double *nw, const double *trq_controller)
 {
     if (helper!=0)
         return false;
     
-    helper=(void *)(new ControlBoardHelper(size, amap, enc, zos, nw));
+    helper=(void *)(new ControlBoardHelper(size, amap, enc, zos, nw, trq_controller));
     yAssert (helper != 0);
     temp=new double [size];
     yAssert (temp != 0);
@@ -187,7 +187,14 @@ bool ImplementTorqueControl::setTorquePid(int j, const Pid &pid)
 {
     int k;
     k=castToMapper(helper)->toHw(j);
-    return iTorqueRaw->setTorquePidRaw(k, pid);
+    //from [Nm/deg] to machine units
+    Pid hw_pid = pid;
+    hw_pid.kp = pid.kp*castToMapper(helper)->controllerParams[j];
+    hw_pid.ki = pid.ki*castToMapper(helper)->controllerParams[j];
+    hw_pid.kd = pid.kd*castToMapper(helper)->controllerParams[j];
+    hw_pid.stiction_up_val = pid.stiction_up_val *castToMapper(helper)->controllerParams[j];
+    hw_pid.stiction_down_val = pid.stiction_down_val *castToMapper(helper)->controllerParams[j];
+    return iTorqueRaw->setTorquePidRaw(k, hw_pid);
 }
 
 bool ImplementTorqueControl::setTorquePids(const Pid *pids)
@@ -199,6 +206,12 @@ bool ImplementTorqueControl::setTorquePids(const Pid *pids)
     {
         tmp=castToMapper(helper)->toHw(j);
         tmpPids[tmp]=pids[j];
+        //from [Nm/deg] to machine units
+        tmpPids[tmp].kp = tmpPids[tmp].kp*castToMapper(helper)->controllerParams[j];
+        tmpPids[tmp].ki = tmpPids[tmp].ki*castToMapper(helper)->controllerParams[j];
+        tmpPids[tmp].kd = tmpPids[tmp].kd*castToMapper(helper)->controllerParams[j];
+        tmpPids[tmp].stiction_up_val = tmpPids[tmp].stiction_up_val *castToMapper(helper)->controllerParams[j];
+        tmpPids[tmp].stiction_down_val = tmpPids[tmp].stiction_down_val *castToMapper(helper)->controllerParams[j];
     }
     
     return iTorqueRaw->setTorquePidsRaw(tmpPids);
@@ -246,7 +259,8 @@ bool ImplementTorqueControl::getTorqueErrors(double *errs)
 bool ImplementTorqueControl::getTorquePidOutput(int j, double *out)
 {
     int k=castToMapper(helper)->toHw(j);
-    return iTorqueRaw->getTorquePidOutputRaw(k, out);
+    bool ret = iTorqueRaw->getTorquePidOutputRaw(k, out);
+    return ret;
 }
 
 bool ImplementTorqueControl::getTorquePidOutputs(double *outs)
@@ -258,8 +272,15 @@ bool ImplementTorqueControl::getTorquePidOutputs(double *outs)
 
 bool ImplementTorqueControl::getTorquePid(int j, Pid *pid)
 {
-  int k=castToMapper(helper)->toHw(j);
-  return iTorqueRaw->getTorquePidRaw(k, pid);
+   int k=castToMapper(helper)->toHw(j);
+   bool ret = iTorqueRaw->getTorquePidRaw(k, pid);
+   //from machine units to metric 
+   pid->kp = pid->kp/castToMapper(helper)->controllerParams[j];
+   pid->ki = pid->ki/castToMapper(helper)->controllerParams[j];
+   pid->kd = pid->kd/castToMapper(helper)->controllerParams[j];
+   pid->stiction_up_val = pid->stiction_up_val/castToMapper(helper)->controllerParams[j];
+   pid->stiction_down_val = pid->stiction_down_val/castToMapper(helper)->controllerParams[j];
+   return ret;
 }
 
 bool ImplementTorqueControl::getTorquePids(Pid *pids)
@@ -273,6 +294,12 @@ bool ImplementTorqueControl::getTorquePids(Pid *pids)
     {
         tmp=castToMapper(helper)->toUser(j);
         pids[tmp]=tmpPids[j];
+        //from machine units to metric 
+        pids[tmp].kp = pids[tmp].kp/castToMapper(helper)->controllerParams[tmp];
+        pids[tmp].ki = pids[tmp].ki/castToMapper(helper)->controllerParams[tmp];
+        pids[tmp].kd = pids[tmp].kd/castToMapper(helper)->controllerParams[tmp];
+        pids[tmp].stiction_up_val = pids[tmp].stiction_up_val/castToMapper(helper)->controllerParams[tmp];
+        pids[tmp].stiction_down_val = pids[tmp].stiction_down_val/castToMapper(helper)->controllerParams[tmp];
     }
 
     return ret;

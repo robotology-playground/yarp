@@ -47,7 +47,7 @@ bool ImplementInteractionMode::initialize(int size, const int *amap, const doubl
     if(helper != NULL)
         return false;
 
-    helper=(void *)(new ControlBoardHelper(size, amap, enc, zos,0));
+    helper=(void *)(new ControlBoardHelper(size, amap, enc, zos, 0, 0));
     yAssert(helper != NULL);
 
     temp_int=new int [size];

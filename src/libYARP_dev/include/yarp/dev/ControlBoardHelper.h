@@ -43,12 +43,13 @@ inline void checkAndDestroy(T* &p) {
 class ControlBoardHelper
 {
 public:
-    ControlBoardHelper(int n, const int *aMap, const double *angToEncs, const double *zs, const double *nw): zeros(0), 
+    ControlBoardHelper(int n, const int *aMap, const double *angToEncs, const double *zs, const double *nw, const double *control_params): zeros(0), 
         signs(0),
         axisMap(0),
         invAxisMap(0),
         angleToEncoders(0),
-        newtonsToSensors(0)
+        newtonsToSensors(0),
+        controllerParams(0)
     {
         yAssert(n>=0);         // if number of joints is negative complain!
         yAssert(aMap!=0);      // at least the axisMap is required
@@ -66,12 +67,17 @@ public:
         if (angToEncs!=0)
             memcpy(angleToEncoders, angToEncs, sizeof(double)*nj);
         else
-            memset(angleToEncoders, 0, sizeof(double)*nj);
+            for (int i = 0; i < nj; i++) angleToEncoders[i] = 1.0;
 
         if (nw!=0)
             memcpy(newtonsToSensors, nw, sizeof(double)*nj);
         else
-            memset(newtonsToSensors, 0, sizeof(double)*nj);
+            for (int i = 0; i < nj; i++) newtonsToSensors[i] = 1.0; 
+
+        if (control_params!=0)
+            memcpy(controllerParams, control_params, sizeof(double)*nj);
+        else
+            for (int i = 0; i < nj; i++) controllerParams[i] = 1.0;
 
         // invert the axis map
         memset (invAxisMap, 0, sizeof(int) * nj);
@@ -111,7 +117,8 @@ public:
         invAxisMap=new int [nj];
         angleToEncoders=new double [nj];
         newtonsToSensors=new double [nj];
-        yAssert(zeros != 0 && signs != 0 && axisMap != 0 && invAxisMap != 0 && angleToEncoders != 0 && newtonsToSensors != 0);
+        controllerParams=new double [nj];
+        yAssert(zeros != 0 && signs != 0 && axisMap != 0 && invAxisMap != 0 && angleToEncoders != 0 && newtonsToSensors != 0 && controllerParams != 0);
 
         return true;
     }
@@ -124,6 +131,7 @@ public:
         checkAndDestroy<int> (invAxisMap);
         checkAndDestroy<double> (angleToEncoders);
         checkAndDestroy<double> (newtonsToSensors);
+        checkAndDestroy<double> (controllerParams);
         return true;
     }
 
@@ -472,6 +480,7 @@ public:
     int *invAxisMap;
     double *angleToEncoders;
     double *newtonsToSensors;
+    double *controllerParams;
 };
 inline ControlBoardHelper *castToMapper(void *p)
 { return static_cast<ControlBoardHelper *>(p); }

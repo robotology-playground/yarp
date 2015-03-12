@@ -36,7 +36,7 @@ protected:
      * @param zos is an array containing the zeros of the encoders.
      * @return true if initialized succeeded, false if it wasn't executed, or assert.
      */
-    bool initialize (int size, const int *amap, const double *enc, const double *zos, const double *nw);
+    bool initialize (int size, const int *amap, const double *enc, const double *zos, const double *nw, const double* trq_controller);
           
     /**
      * Clean up internal data and memory.

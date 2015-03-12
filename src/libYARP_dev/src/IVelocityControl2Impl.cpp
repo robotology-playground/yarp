@@ -34,7 +34,7 @@ bool ImplementVelocityControl2::initialize(int size, const int *axis_map, const 
     if (helper != NULL)
         return false;
 
-    helper=(void *)(new ControlBoardHelper(size, axis_map, enc, zeros,0));
+    helper=(void *)(new ControlBoardHelper(size, axis_map, enc, zeros, 0, 0));
     yAssert (helper != NULL);
     temp_double = new double [size];
     yAssert (temp_double != NULL);

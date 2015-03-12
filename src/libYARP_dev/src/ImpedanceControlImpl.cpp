@@ -26,7 +26,7 @@ bool ImplementImpedanceControl::initialize(int size, const int *amap, const doub
     if (helper!=0)
         return false;
 
-    helper=(void *)(new ControlBoardHelper(size, amap, enc, zos, nw));
+    helper=(void *)(new ControlBoardHelper(size, amap, enc, zos, nw, 0));
     yAssert (helper != 0);
 
     return true;

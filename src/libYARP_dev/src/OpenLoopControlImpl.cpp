@@ -29,7 +29,7 @@ bool ImplementOpenLoopControl::initialize(int size, const int *amap)
     for(int k=0;k<size;k++)
         dummy[k]=0;
 
-    helper=(void *)(new ControlBoardHelper(size, amap, dummy, dummy, dummy));
+    helper=(void *)(new ControlBoardHelper(size, amap, dummy, dummy, dummy, dummy));
     yAssert(helper != 0);
 
     delete [] dummy;
