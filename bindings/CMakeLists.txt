@@ -43,9 +43,12 @@ if(YARP_COMPILE_BINDINGS)
 #############################################################################
 ## Find YARP and SWIG
 
-get_property(YARP_INCLUDE_DIRS GLOBAL PROPERTY YARP_TREE_INCLUDE_DIRS)
-get_property(YARP_LIBRARIES GLOBAL PROPERTY YARP_LIBS)
-include_directories(${YARP_INCLUDE_DIRS})
+get_property(YARP_OS_INCLUDE_DIRS TARGET YARP_OS PROPERTY INCLUDE_DIRS)
+get_property(YARP_sig_INCLUDE_DIRS TARGET YARP_sig PROPERTY INCLUDE_DIRS)
+get_property(YARP_dev_INCLUDE_DIRS TARGET YARP_dev PROPERTY INCLUDE_DIRS)
+include_directories(${YARP_OS_INCLUDE_DIRS}
+                    ${YARP_sig_INCLUDE_DIRS}
+                    ${YARP_dev_INCLUDE_DIRS})
 
 find_package(SWIG "1.3.29" REQUIRED)
 include(${SWIG_USE_FILE})
