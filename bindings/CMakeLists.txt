@@ -50,6 +50,11 @@ include_directories(${YARP_OS_INCLUDE_DIRS}
                     ${YARP_sig_INCLUDE_DIRS}
                     ${YARP_dev_INCLUDE_DIRS})
 
+set(YARP_LIBRARIES YARP_OS
+                   YARP_init
+                   YARP_sig
+                   YARP_dev)
+
 find_package(SWIG "1.3.29" REQUIRED)
 include(${SWIG_USE_FILE})
 
@@ -91,6 +96,7 @@ if(CREATE_JAVA)
   ### Add SWIG target
   set(target_name yarp_bindings_java)
   swig_add_module(${target_name} java yarp.i)
+  swig_link_libraries(${target_name} ${YARP_LIBRARIES})
   set_target_properties(${target_name} PROPERTIES OUTPUT_NAME "jyarp")
 
   ### Prepare class files
