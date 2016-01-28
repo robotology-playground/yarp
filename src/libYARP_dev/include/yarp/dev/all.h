@@ -31,7 +31,6 @@
 #include <yarp/dev/IRangefinder2D.h>
 #include <yarp/dev/IRGBDSensor.h>
 #include <yarp/dev/PolyDriver.h>
-#include <yarp/dev/RemoteFrameGrabber.h>
 #include <yarp/dev/ServerFrameGrabber.h>
 #include <yarp/dev/ServerSoundGrabber.h>
 #include <yarp/dev/ServiceInterfaces.h>

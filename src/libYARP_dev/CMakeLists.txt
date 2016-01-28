@@ -124,6 +124,24 @@ set(YARP_dev_SRCS src/ControlBoardInterfacesImpl.cpp
                   src/TorqueControlImpl.cpp
                   src/IAxisInfoImpl.cpp)
 
+# FIXME Enable warning 4996 as soon as all deprecated modules are moved
+#       to the modules folder and are no longer part of the API
+if(MSVC)
+  set_source_files_properties(src/RemoteFrameGrabber.cpp
+                              src/RemoteFrameGrabberDC1394.cpp
+                              src/PopulateDrivers.cpp
+                              PROPERTIES COMPILE_FLAGS "/wd4996")
+else()
+  check_cxx_compiler_flag("-Wno-deprecated-declarations" CXX_HAS_WNO_DEPRECATED_DECLARATIONS)
+  if(CXX_HAS_WNO_DEPRECATED_DECLARATIONS)
+    set_source_files_properties(src/RemoteFrameGrabber.cpp
+                                src/RemoteFrameGrabberDC1394.cpp
+                                src/PopulateDrivers.cpp
+                                PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations")
+  endif()
+endif()
+
+
 set(YARP_devices_SRCS   src/modules/AnalogWrapper/AnalogWrapper.cpp
                         src/modules/AnalogSensorClient/AnalogSensorClient.cpp
                         src/modules/BatteryWrapper/BatteryWrapper.cpp

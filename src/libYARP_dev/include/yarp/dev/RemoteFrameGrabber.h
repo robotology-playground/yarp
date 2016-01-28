@@ -564,6 +564,11 @@ return response.get(0).asInt()!=0? true:false;
     }
 };
 
+#ifndef YARP_NO_DEPRECATED
+// This template instantiation is required until RemoteFrameGrabber
+// is exported using YARP_dev_API
+YARP_dev_EXTERN template class YARP_dev_DEPRECATED_API yarp::os::PortReaderBuffer<yarp::sig::ImageOf<yarp::sig::PixelRgb> >;
+#endif
 
 /**
  * @ingroup dev_impl_wrapper
@@ -573,10 +578,10 @@ return response.get(0).asInt()!=0? true:false;
  * the network protocol used.
  *
  */
-class YARP_dev_API yarp::dev::RemoteFrameGrabber :  public IFrameGrabberImage,
-                                                    public IFrameGrabberControls2,
-                                                    public ImplementDC1394,
-                                                    public DeviceDriver
+class YARP_dev_DEPRECATED_API yarp::dev::RemoteFrameGrabber :  public IFrameGrabberImage,
+                                                               public IFrameGrabberControls2,
+                                                               public ImplementDC1394,
+                                                               public DeviceDriver
 {
 public:
     /**
@@ -824,11 +829,10 @@ protected:
     }
 };
 
-class yarp::dev::RemoteFrameGrabberDC1394 : public yarp::dev::RemoteFrameGrabber
-{
-
-};
-
+#ifndef YARP_NO_DEPRECATED
+// This class is kept for backwards compatibility.
+class YARP_dev_DEPRECATED_API yarp::dev::RemoteFrameGrabberDC1394 : public yarp::dev::RemoteFrameGrabber {};
 #endif
 
 
+#endif
