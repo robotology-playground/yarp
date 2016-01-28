@@ -29,7 +29,7 @@ namespace yarp{
  *
  */
 
-class YARP_dev_API yarp::dev::RemoteFrameGrabberControlsDC1394 : public IFrameGrabberControlsDC1394
+class YARP_dev_DEPRECATED_API yarp::dev::RemoteFrameGrabberControlsDC1394 : public IFrameGrabberControlsDC1394
 {
 public:
     RemoteFrameGrabberControlsDC1394()
