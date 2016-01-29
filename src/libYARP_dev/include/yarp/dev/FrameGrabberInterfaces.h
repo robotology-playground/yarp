@@ -450,22 +450,24 @@ class YARP_dev_API yarp::dev::IFrameGrabberControlsDC1394 : public yarp::dev::IF
 {
 public:
     // 00 01 02
-    virtual bool hasFeatureDC1394(int feature)=0;//{ return true; }
-    virtual bool setFeatureDC1394(int feature,double value)=0;//{ return true; }
-    virtual double getFeatureDC1394(int feature)=0;//{ return 0.5; }
+#ifndef YARP_NO_DEPRECATED
+    virtual bool YARP_DEPRECATED hasFeatureDC1394(int feature)=0;//{ return true; }
+    virtual bool YARP_DEPRECATED setFeatureDC1394(int feature,double value)=0;//{ return true; }
+    virtual double YARP_DEPRECATED getFeatureDC1394(int feature)=0;//{ return 0.5; }
 
     // 03 04 05
-    virtual bool hasOnOffDC1394(int feature)=0;//{ return true; }
-    virtual bool setActiveDC1394(int feature, bool onoff)=0;//{ return true; }
-    virtual bool getActiveDC1394(int feature)=0;//{ return true; }
+    virtual bool YARP_DEPRECATED hasOnOffDC1394(int feature)=0;//{ return true; }
+    virtual bool YARP_DEPRECATED setActiveDC1394(int feature, bool onoff)=0;//{ return true; }
+    virtual bool YARP_DEPRECATED getActiveDC1394(int feature)=0;//{ return true; }
 
     // 06 07 08 09 10 11
-    virtual bool hasAutoDC1394(int feature)=0;//{ return true; }
-    virtual bool hasManualDC1394(int feature)=0;//{ return true; }
-    virtual bool hasOnePushDC1394(int feature)=0;//{ return true; }
-    virtual bool setModeDC1394(int feature, bool auto_onoff)=0;//{ return true; }
-    virtual bool getModeDC1394(int feature)=0;//{ return true; }
-    virtual bool setOnePushDC1394(int feature)=0;//{ return true; }
+    virtual bool YARP_DEPRECATED hasAutoDC1394(int feature)=0;//{ return true; }
+    virtual bool YARP_DEPRECATED hasManualDC1394(int feature)=0;//{ return true; }
+    virtual bool YARP_DEPRECATED hasOnePushDC1394(int feature)=0;//{ return true; }
+    virtual bool YARP_DEPRECATED setModeDC1394(int feature, bool auto_onoff)=0;//{ return true; }
+    virtual bool YARP_DEPRECATED getModeDC1394(int feature)=0;//{ return true; }
+    virtual bool YARP_DEPRECATED setOnePushDC1394(int feature)=0;//{ return true; }
+#endif
 
     // 12 13 14
     virtual unsigned int getVideoModeMaskDC1394()=0;//{ return 0xFFFFFFFF; }
@@ -487,8 +489,10 @@ public:
     virtual bool setColorCodingDC1394(int coding)=0;//{ return true; }
 
     // 23 24
-    virtual bool setWhiteBalanceDC1394(double b, double r)=0;//{ return true; }
-    virtual bool getWhiteBalanceDC1394(double &b, double &r)=0;
+#ifndef YARP_NO_DEPRECATED
+    virtual bool YARP_DEPRECATED setWhiteBalanceDC1394(double b, double r)=0;//{ return true; }
+    virtual bool YARP_DEPRECATED getWhiteBalanceDC1394(double &b, double &r)=0;
+#endif
     /*{
         b=r=0.5;
         return true;
