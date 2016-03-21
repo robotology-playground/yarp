@@ -18,8 +18,7 @@
 #include <yarp/dev/PreciselyTimed.h>
 #include <yarp/os/Log.h>
 #include <yarp/os/LogStream.h>
-#include <ServerInertial.h>
-
+#include "ServerInertial.h"
 
 using namespace yarp::dev;
 using namespace yarp::os;
@@ -60,23 +59,6 @@ yarp::dev::ServerInertial::ServerInertial() : ownDevices(false), subDeviceOwned(
 
     euler_xyz.resize(3);
     quaternion.resize(4);
-//    rosData.angular_velocity.x = 0;
-//    rosData.angular_velocity.y = 0;
-//    rosData.angular_velocity.z = 0;
-//    rosData.angular_velocity_covariance = covariance;
-
-//    rosData.linear_acceleration.x = 0;
-//    rosData.linear_acceleration.y = 0;
-//    rosData.linear_acceleration.z = 0;
-//    rosData.linear_acceleration_covariance = covariance;
-
-//    rosData.orientation.x = 0;
-//    rosData.orientation.y = 0;
-//    rosData.orientation.z = 0;
-//    rosData.orientation.w = 0;
-//    rosData.orientation_covariance = covariance;
-
-//     yDebug() << "covariance size is " << covariance.size();
 }
 
 yarp::dev::ServerInertial::~ServerInertial()
@@ -294,7 +276,7 @@ bool yarp::dev::ServerInertial::open(yarp::os::Searchable& config)
         ownDevices=true;
         if(! openAndAttachSubDevice(prop))
         {
-            yError("ControlBoardWrapper: error while opening subdevice\n");
+            yError("ServerInertial: error while opening subdevice\n");
             return false;
         }
     }
@@ -446,7 +428,6 @@ void yarp::dev::ServerInertial::run()
 
                 if((nchannels == 16) && (imuData.size() == 16))
                 {
-                    yTrace() << "Using quaternion from device";
                     // Read quaternion from device, ROS order is x,y,z,w
                     quaternion[0] = imuData.get(12).asDouble();
                     quaternion[1] = imuData.get(13).asDouble();
