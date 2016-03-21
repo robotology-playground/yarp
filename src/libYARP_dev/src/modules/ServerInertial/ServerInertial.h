@@ -145,6 +145,7 @@ private:
     yarp::os::NetUint32                                 rosMsgCounter;              // incremental counter in the ROS message
     yarp::os::Publisher<sensor_msgs_Imu>                rosPublisherPort;           // Dedicated ROS topic publisher
     std::vector<yarp::os::NetFloat64>                   covariance;                 // empty matrix to store covariance data needed by ROS msg
+    yarp::sig::Vector                                   euler_xyz, quaternion;
 
     bool checkROSParams(yarp::os::Searchable &config);
     bool initialize_ROS();

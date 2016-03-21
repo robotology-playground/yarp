@@ -58,6 +58,8 @@ yarp::dev::ServerInertial::ServerInertial() : ownDevices(false), subDeviceOwned(
     covariance.resize(9);
     covariance.assign(9, 0);
 
+    euler_xyz.resize(3);
+    quaternion.resize(4);
 //    rosData.angular_velocity.x = 0;
 //    rosData.angular_velocity.y = 0;
 //    rosData.angular_velocity.z = 0;
@@ -394,6 +396,8 @@ void yarp::dev::ServerInertial::run()
     yInfo("Starting server Inertial thread\n");
     while (!isStopping())
     {
+        int nchannels;
+        IMU->getChannels (&nchannels);
         before = yarp::os::Time::now();
         if (IMU!=NULL)
         {
@@ -438,14 +442,26 @@ void yarp::dev::ServerInertial::run()
             // publish ROS topic if required
             if(useROS != ROS_disabled)
             {
-                double euler_xyz[3], quaternion[4];
+                // check out if sensor provides quaternion
 
-                euler_xyz[0] = imuData.get(0).asDouble();
-                euler_xyz[1] = imuData.get(1).asDouble();
-                euler_xyz[2] = imuData.get(2).asDouble();
+                if((nchannels == 16) && (imuData.size() == 16))
+                {
+                    yTrace() << "Using quaternion from device";
+                    // Read quaternion from device, ROS order is x,y,z,w
+                    quaternion[0] = imuData.get(12).asDouble();
+                    quaternion[1] = imuData.get(13).asDouble();
+                    quaternion[2] = imuData.get(14).asDouble();
+                    quaternion[3] = imuData.get(15).asDouble();
+                }
+                else
+                {
+                    // compute the quaternion from RPY
+                    euler_xyz[0] = imuData.get(0).asDouble();
+                    euler_xyz[1] = imuData.get(1).asDouble();
+                    euler_xyz[2] = imuData.get(2).asDouble();
 
-                convertEulerAngleYXZdegrees_to_quaternion(euler_xyz, quaternion);
-
+                    convertEulerAngleYXZdegrees_to_quaternion(euler_xyz.data(), quaternion.data());
+                }
                 sensor_msgs_Imu &rosData = rosPublisherPort.prepare();
 
                 rosData.header.seq = rosMsgCounter++;
