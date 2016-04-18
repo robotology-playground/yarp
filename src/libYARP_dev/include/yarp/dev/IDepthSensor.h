@@ -25,11 +25,12 @@
 #include <yarp/os/Stamp.h>
 
 // Common usage vocabs (also defined in ControlBoardInterfaces.h)
-#define VOCAB_SET VOCAB3('s','e','t')
-#define VOCAB_GET VOCAB3('g','e','t')
-#define VOCAB_IS  VOCAB2('i','s')
-#define VOCAB_OK  VOCAB2('o','k')
-#define VOCAB_FAILED VOCAB4('f','a','i','l')
+#define VOCAB_SET                   VOCAB3('s','e','t')
+#define VOCAB_GET                   VOCAB3('g','e','t')
+#define VOCAB_IS                    VOCAB2('i','s')
+#define VOCAB_OK                    VOCAB2('o','k')
+#define VOCAB_SUCCESS               VOCAB4('s','u','c','c')
+#define VOCAB_FAILED                VOCAB4('f','a','i','l')
 
 #define VOCAB_IDEPTH_SENSOR         VOCAB4('i','d','p','t')
 #define VOCAB_SENSOR_INFO           VOCAB4('i','n','f','o')
@@ -40,6 +41,11 @@
 #define VOCAB_DATA_SIZE             VOCAB4('s','i','z','e')
 #define VOCAB_HV_RESOLUTION         VOCAB3('r','e','s')
 #define VOCAB_SCAN_RATE             VOCAB4('r','a','t','e')
+#define VOCAB_DEPTH_MIRROR          VOCAB4('d','m','i','r')
+
+#define VOCAB_DEPTH_WIDTH           VOCAB4('d','w','i','d')
+#define VOCAB_DEPTH_HEIGHT          VOCAB4('d','h','e','i')
+
 
 namespace yarp {
     namespace dev {
@@ -156,22 +162,22 @@ public:
     virtual bool setVerticalScanLimits(double min, double max) = 0;
 
    /**
-    * get the size of measured data from the device.
-    * It can be WxH for camera-like devices, or the number of points for other devices.
-    * @param horizontal width of image,  number of points in the horizontal scan [num]
-    * @param vertical   height of image, number of points in the vertical scan [num]
+    * Get the height of data matrix measured by the device.
+    * It can be height of image for camera-like devices, or any number of points for
+    * other devices. For un-ordered data stream it shall be equal to 1.
+    * @param height   height of image, number of points in the vertical scan [dimension-less]
     * @return true if able to get required info.
     */
-    virtual bool getDataSize(double *horizontal, double *vertical) = 0;
+    virtual int height() const = 0;
 
    /**
-    * set the size of measured data from the device.
-    * It can be WxH for camera-like devices, or the number of points for other devices.
-    * @param horizontal width of image,  number of points in the horizontal scan [num]
-    * @param vertical   height of image, number of points in the vertical scan [num]
+    * Get the width of data matrix measured by the device.
+    * It can be width of image for camera-like devices, while
+    * for un-ordered data stream it shall be equal to number of data sent.
+    * @param width  width of image, number of points in the vertical scan [dimension-less]
     * @return true if message was correctly delivered to the HW device.
     */
-    virtual bool setDataSize(double horizontal, double vertical) = 0;
+    virtual int width() const = 0;
 
    /**
     * get the device resolution, using the current settings of scan limits
@@ -208,7 +214,7 @@ public:
     */
     virtual bool setScanRate(double rate) = 0;
 
-    /**
+   /**
     * Set the mirroring option of the HW device for the depth camera.
     * NOTE: this setting ONLY influence the depth image, if the device
     * has also rgb image, the mirroring setting for the rgb camera has to be
@@ -219,7 +225,7 @@ public:
     */
     virtual bool setDepthMirror(bool mirror) = 0;
 
-    /**
+   /**
     * Get the mirroring option of the HW device.
     * NOTE: this get ONLY return setting of the depth image, if the device
     * has also rgb image, the mirroring setting for the rgb camera has to be

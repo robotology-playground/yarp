@@ -14,7 +14,37 @@ using namespace yarp::os;
 using namespace yarp::sig;
 
 
-// needed for the driver factory.
+/* Syntax of commands:
+ *
+ * Set command: the bottle will contains the following vocabs
+ *
+ * VOCAB_IRGB  - Name of the interface
+ * VOCAB_SET   - Identifier of set command
+ * VOCAB_<XXX> - Identifier of the specific command
+ * <values to be set>
+ *
+ * Expected anwer is
+ * VOCAB_SUCCESS  - In case of success
+ * VOCAB_FAIL     - In case of failure
+ *
+ *
+ * Get command: the bottle will contains the following vocabs
+ *
+ * VOCAB_IRGB  - Name of the interface
+ * VOCAB_GET   - Identifier of set command
+ * VOCAB_<XXX> - Identifier of the specific command
+ *
+ * Expected anwer is
+ * VOCAB_FAIL     - In case of failure
+ *
+ * VOCAB_SUCCESS  - In case of success
+ * VOCAB_<XXX>    - Echo of the specific command
+ * VOCAB_IS       - Identify the requested value are following
+ * <XXX>          - Values requested
+ *
+ */
+
+// needed for the driver factory.1
 yarp::dev::DriverCreator *createRGBDSensorClient() {
     return new DriverCreatorOf<yarp::dev::RGBDSensorClient>("RGBDSensorClient",
         "RGBDSensorClient",
@@ -253,8 +283,42 @@ bool RGBDSensorClient::getImage(yarp::sig::ImageOf<yarp::sig::PixelMono> &image)
  * Return the height of each frame.
  * @return image height
  */
+
+int RGBDSensorClient::rgbDataWidth() const
+{
+    Bottle cmd, response;
+    cmd.addVocab(VOCAB_IRGBD_SENSOR);
+    cmd.addVocab(VOCAB_GET);
+    cmd.addVocab(VOCAB_RGB_WIDTH);
+    if(colorFrame_rpcPort.write(cmd, response))
+    {
+        if(CHECK_SUCCESS(response))
+        {
+            (response.get(1).asVocab() == VOCAB_RGB_WIDTH) && (response.get(2).asVocab() == VOCAB_IS);
+            return true;
+        }
+    }
+    return 0;
+}
+
+int RGBDSensorClient::rgbDataHeight() const
+{
+    return 0;
+}
+
+int RGBDSensorClient::depthDataWidth() const
+{
+    return 0;
+}
+
+int RGBDSensorClient::depthDataHeight() const
+{
+    return 0;
+}
+
 int RGBDSensorClient::height() const
 {
+    yError() << "RGBDSensorClient::height() function should never be called";
     return 0;
 }
 
@@ -264,6 +328,7 @@ int RGBDSensorClient::height() const
  */
 int RGBDSensorClient::width() const
 {
+    yError() << "RGBDSensorClient::width() function should never be called";
     return 0;
 }
 
@@ -367,28 +432,7 @@ bool RGBDSensorClient::setVerticalScanLimits(double min, double max)
 {
     return false;
 }
-/**
- * get the size of measured data from the device.
- * It can be WxH for camera-like devices, or the number of points for other devices.
- * @param horizontal width of image,  number of points in the horizontal scan [num]
- * @param vertical   height of image, number of points in the vertical scan [num]
- * @return true if able to get required info.
- */
-bool RGBDSensorClient::getDataSize(double *horizontal, double *vertical)
-{
-    return false;
-}
-/**
- * set the size of measured data from the device.
- * It can be WxH for camera-like devices, or the number of points for other devices.
- * @param horizontal width of image,  number of points in the horizontal scan [num]
- * @param vertical   height of image, number of points in the vertical scan [num]
- * @return true if message was correctly delivered to the HW device.
- */
-bool RGBDSensorClient::setDataSize(double horizontal, double vertical)
-{
-    return false;
-}
+
 /**
  * get the device resolution, using the current settings of scan limits
  * and data size. Will return the resolution of device at 1 meter distance.
