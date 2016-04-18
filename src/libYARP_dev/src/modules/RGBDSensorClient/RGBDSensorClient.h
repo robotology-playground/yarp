@@ -327,7 +327,17 @@ public:
     */
     virtual bool setScanRate(double rate);
 
- /** IRGBDSensor specific interface methods*/
+    virtual bool setDepthMirror(bool mirror);
+    virtual bool getDepthMirror(bool* mirror);
+
+
+    //
+    // IRGBDSensor specific interface methods*/
+    //
+
+    virtual bool setRgbMirror(bool mirror);
+    virtual bool getRgbMirror(bool *mirror);
+
     virtual bool getRGBDSensor_Status(RGBDSensor_status *status);
 
     /**

@@ -434,7 +434,29 @@ bool RGBDSensorClient::setScanRate(double rate)
     return false;
 }
 
+bool RGBDSensorClient::setDepthMirror(bool mirror)
+{
+    return false;
+}
+
+bool RGBDSensorClient::getDepthMirror(bool* mirror)
+{
+    return false;
+}
+
+
 /** IRGBDSensor specific interface methods*/
+
+bool RGBDSensorClient::setRgbMirror(bool mirror)
+{
+    return false;
+}
+
+bool RGBDSensorClient::getRgbMirror(bool* mirror)
+{
+    return false;
+}
+
 bool RGBDSensorClient::getRGBDSensor_Status(RGBDSensor_status *status)
 {
     return false;
