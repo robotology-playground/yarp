@@ -207,6 +207,27 @@ public:
     * @return true if message was correctly delivered to the HW device.
     */
     virtual bool setScanRate(double rate) = 0;
+
+    /**
+    * Set the mirroring option of the HW device for the depth camera.
+    * NOTE: this setting ONLY influence the depth image, if the device
+    * has also rgb image, the mirroring setting for the rgb camera has to be
+    * configured independently using proper interface.
+    * If set to true, the image sent by the device will be mirrored on X axis
+    * @param mirror the mirroring option
+    * @return true if message was correctly delivered to the HW device.
+    */
+    virtual bool setDepthMirror(bool mirror) = 0;
+
+    /**
+    * Get the mirroring option of the HW device.
+    * NOTE: this get ONLY return setting of the depth image, if the device
+    * has also rgb image, the mirroring setting for the rgb camera has to be
+    * read independently using proper interface.
+    * @param mirror the mirroring setting returned by the call
+    * @return true if message was correctly delivered to the HW device.
+    */
+    virtual bool getDepthMirror(bool *mirror) = 0;
 };
 
 #endif   // YARP_DEV_IDEPTHSENSOR_H

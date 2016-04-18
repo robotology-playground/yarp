@@ -83,6 +83,8 @@ public:
     using IDepthSensor::setResolution;
     using IDepthSensor::getScanRate;
     using IDepthSensor::setScanRate;
+    using IDepthSensor::setDepthMirror;
+    using IDepthSensor::getDepthMirror;
 
     /** IFrameGrabberImage interface */
     virtual int height() const = 0;
@@ -92,7 +94,13 @@ public:
 //     virtual bool getImage(yarp::sig::ImageOf<yarp::sig::PixelRgb>& image)  = 0;
 //     virtual bool getImage(yarp::sig::ImageOf<yarp::sig::PixelMono>& image) = 0;
 
+
     /** IRGBDSensor specific interface methods*/
+
+    // Following 2 methos could be into FrameGrabberInterface
+    virtual bool setRgbMirror(bool mirror) = 0;
+    virtual bool getRgbMirror(bool *mirror) = 0;
+
     virtual bool getRGBDSensor_Status(RGBDSensor_status *status) = 0;
 
     /**
