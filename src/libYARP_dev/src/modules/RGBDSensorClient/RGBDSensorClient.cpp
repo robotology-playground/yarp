@@ -69,7 +69,7 @@ bool RGBDSensorClient::fromConfig(yarp::os::Searchable &config)
     if(rosGroup.isNull())
     {
         if(verbose >= 3)
-            yInfo() << "RGBDSensorClient: ROS configuration paramters are not set, skipping ROS topic initialization.";
+            yInfo() << "RGBDSensorClient: ROS configuration parameters are not set, skipping ROS topic initialization.";
         use_ROS  = false;
     }
     else
@@ -158,7 +158,6 @@ bool RGBDSensorClient::fromConfig(yarp::os::Searchable &config)
         watchdog = config.find("watchdog").asDouble();
     }
 
-
     return true;
 }
 
@@ -217,10 +216,10 @@ bool RGBDSensorClient::initialize_ROS(yarp::os::Searchable &config)
     return true;
 }
 
-    /**
-     * Close the DeviceDriver.
-     * @return true/false on success/failure.
-     */
+/**
+ * Close the DeviceDriver.
+ * @return true/false on success/failure.
+ */
 bool RGBDSensorClient::close()
 {
     return true;
@@ -228,41 +227,41 @@ bool RGBDSensorClient::close()
 
 // IFrameGrabber Interfaces
 /**
-    * Get an rgb image from the frame grabber, if required
-    * demosaicking/color reconstruction is applied
-    *
-    * @param image the image to be filled
-    * @return true/false upon success/failure
-    */
+ * Get an rgb image from the frame grabber, if required
+ * demosaicking/color reconstruction is applied
+ *
+ * @param image the image to be filled
+ * @return true/false upon success/failure
+ */
 bool RGBDSensorClient::getImage(yarp::sig::ImageOf<yarp::sig::PixelRgb> &image)
 {
     return false;
 }
 
 /**
-    * Get a raw image from the frame grabber
-    *
-    * @param image the image to be filled
-    * @return true/false upon success/failure
-    */
+ * Get a raw image from the frame grabber
+ *
+ * @param image the image to be filled
+ * @return true/false upon success/failure
+ */
 bool RGBDSensorClient::getImage(yarp::sig::ImageOf<yarp::sig::PixelMono> &image)
 {
     return false;
 }
 
 /**
-    * Return the height of each frame.
-    * @return image height
-    */
+ * Return the height of each frame.
+ * @return image height
+ */
 int RGBDSensorClient::height() const
 {
     return 0;
 }
 
 /**
-    * Return the width of each frame.
-    * @return image width
-    */
+ * Return the width of each frame.
+ * @return image width
+ */
 int RGBDSensorClient::width() const
 {
     return 0;
@@ -273,162 +272,162 @@ int RGBDSensorClient::width() const
 //  IDepth Interface
 //
 /**
-* get the device hardware charactestics
-* @param device_info Searchable struct containing the device info
-* @return true if able to get information about the device.
-*/
+ * get the device hardware charactestics
+ * @param device_info Searchable struct containing the device info
+ * @return true if able to get information about the device.
+ */
 bool RGBDSensorClient::getDeviceInfo(yarp::os::Searchable *device_info)
 {
     return false;
 }
 
 /**
-* Get the distance measurements as an image
-* @param ranges the vector containing the distance measurement
-* @return true if able to get measurement data.
-*/
+ * Get the distance measurements as an image
+ * @param ranges the vector containing the distance measurement
+ * @return true if able to get measurement data.
+ */
 bool RGBDSensorClient::getMeasurementData(yarp::sig::FlexImage &image, yarp::os::Stamp *stamp)
 {
     return false;
 }
 /**
-* get the device status
-* @param status the device status
-* @return true/false.
-*/
+ * get the device status
+ * @param status the device status
+ * @return true/false.
+ */
 bool RGBDSensorClient::getDeviceStatus(DepthSensor_status *status)
 {
     return false;
 }
 /**
-* get the device detection range
-* @param min the minimum detection distance from the sensor [meter]
-* @param max the maximum detection distance from the sensor [meter]
-* @return true if able to get required info.
-*/
+ * get the device detection range
+ * @param min the minimum detection distance from the sensor [meter]
+ * @param max the maximum detection distance from the sensor [meter]
+ * @return true if able to get required info.
+ */
 bool RGBDSensorClient::getDistanceRange(double *min, double *max)
 {
     return false;
 }
 /**
-* set the device detection range. Invalid setting will be discarded.
-* @param min the minimum detection distance from the sensor [meter]
-* @param max the maximum detection distance from the sensor [meter]
-* @return true if message was correctly delivered to the HW device.
-*/
+ * set the device detection range. Invalid setting will be discarded.
+ * @param min the minimum detection distance from the sensor [meter]
+ * @param max the maximum detection distance from the sensor [meter]
+ * @return true if message was correctly delivered to the HW device.
+ */
 bool RGBDSensorClient::setDistanceRange(double min, double max)
 {
     return false;
 }
 /**
-* get the horizontal scan limits / field of view with respect to the
-* front line of sight of the sensor. Angles are measured around the
-* positive Z axis (counterclockwise, if Z is up) with zero angle being
-* forward along the x axis
-* @param min start angle of the scan  [degrees]
-* @param max end angle of the scan    [degrees]
-* @return true if able to get required info.
-*/
+ * get the horizontal scan limits / field of view with respect to the
+ * front line of sight of the sensor. Angles are measured around the
+ * positive Z axis (counterclockwise, if Z is up) with zero angle being
+ * forward along the x axis
+ * @param min start angle of the scan  [degrees]
+ * @param max end angle of the scan    [degrees]
+ * @return true if able to get required info.
+ */
 bool RGBDSensorClient::getHorizontalScanLimits(double *min, double *max)
 {
     return false;
 }
 /**
-* set the horizontal scan limits / field of view with respect to the
-* front line of sight of the sensor. Angles are measured around the
-* positive Z axis (counterclockwise, if Z is up) with zero angle being
-* forward along the x axis
-* @param min start angle of the scan  [degrees]
-* @param max end angle of the scan    [degrees]
-* @return true if message was correctly delivered to the HW device.
-*/
+ * set the horizontal scan limits / field of view with respect to the
+ * front line of sight of the sensor. Angles are measured around the
+ * positive Z axis (counterclockwise, if Z is up) with zero angle being
+ * forward along the x axis
+ * @param min start angle of the scan  [degrees]
+ * @param max end angle of the scan    [degrees]
+ * @return true if message was correctly delivered to the HW device.
+ */
 bool RGBDSensorClient::setHorizontalScanLimits(double min, double max)
 {
     return false;
 }
 /**
-* get the vertical scan limits / field of view with respect to the
-* front line of sight of the sensor   [degrees]
-* @param min start angle of the scan  [degrees]
-* @param max end angle of the scan    [degrees]
-* @return true if able to get required info.
-*/
+ * get the vertical scan limits / field of view with respect to the
+ * front line of sight of the sensor   [degrees]
+ * @param min start angle of the scan  [degrees]
+ * @param max end angle of the scan    [degrees]
+ * @return true if able to get required info.
+ */
 bool RGBDSensorClient::getVerticalScanLimits(double *min, double *max)
 {
     return false;
 }
 /**
-* set the vertical scan limits / field of view with respect to the
-* front line of sight of the sensor   [degrees]
-* @param min start angle of the scan  [degrees]
-* @param max end angle of the scan    [degrees]
-* @return true if message was correctly delivered to the HW device.
-*/
+ * set the vertical scan limits / field of view with respect to the
+ * front line of sight of the sensor   [degrees]
+ * @param min start angle of the scan  [degrees]
+ * @param max end angle of the scan    [degrees]
+ * @return true if message was correctly delivered to the HW device.
+ */
 bool RGBDSensorClient::setVerticalScanLimits(double min, double max)
 {
     return false;
 }
 /**
-* get the size of measured data from the device.
-* It can be WxH for camera-like devices, or the number of points for other devices.
-* @param horizontal width of image,  number of points in the horizontal scan [num]
-* @param vertical   height of image, number of points in the vertical scan [num]
-* @return true if able to get required info.
-*/
+ * get the size of measured data from the device.
+ * It can be WxH for camera-like devices, or the number of points for other devices.
+ * @param horizontal width of image,  number of points in the horizontal scan [num]
+ * @param vertical   height of image, number of points in the vertical scan [num]
+ * @return true if able to get required info.
+ */
 bool RGBDSensorClient::getDataSize(double *horizontal, double *vertical)
 {
     return false;
 }
 /**
-* set the size of measured data from the device.
-* It can be WxH for camera-like devices, or the number of points for other devices.
-* @param horizontal width of image,  number of points in the horizontal scan [num]
-* @param vertical   height of image, number of points in the vertical scan [num]
-* @return true if message was correctly delivered to the HW device.
-*/
+ * set the size of measured data from the device.
+ * It can be WxH for camera-like devices, or the number of points for other devices.
+ * @param horizontal width of image,  number of points in the horizontal scan [num]
+ * @param vertical   height of image, number of points in the vertical scan [num]
+ * @return true if message was correctly delivered to the HW device.
+ */
 bool RGBDSensorClient::setDataSize(double horizontal, double vertical)
 {
     return false;
 }
 /**
-* get the device resolution, using the current settings of scan limits
-* and data size. Will return the resolution of device at 1 meter distance.
-* @param hRes horizontal resolution [meter]
-* @param vRes vertical resolution [meter]
-* @return true if able to get required info.
-*/
+ * get the device resolution, using the current settings of scan limits
+ * and data size. Will return the resolution of device at 1 meter distance.
+ * @param hRes horizontal resolution [meter]
+ * @param vRes vertical resolution [meter]
+ * @return true if able to get required info.
+ */
 bool RGBDSensorClient::getResolution(double *hRes, double *vRes)
 {
     return false;
 }
 /**
-* set the device resolution.
-* This call can change the current settings of scan limits, data size or scan rate
-* to match the requested resolution.
-* Verify those settings is suggested after this call.
-* Will set the resolution of device at 1meter distance, if possible.
-* @param hRes horizontal resolution [meter]
-* @param vRes vertical resolution [meter]
-* @return true if message was correctly delivered to the HW device.
-*/
+ * set the device resolution.
+ * This call can change the current settings of scan limits, data size or scan rate
+ * to match the requested resolution.
+ * Verify those settings is suggested after this call.
+ * Will set the resolution of device at 1meter distance, if possible.
+ * @param hRes horizontal resolution [meter]
+ * @param vRes vertical resolution [meter]
+ * @return true if message was correctly delivered to the HW device.
+ */
 bool RGBDSensorClient::setResolution(double hRes, double vRes)
 {
     return false;
 }
 /**
-* get the scan rate (scans per seconds)
-* @param rate the scan rate
-* @return true if able to get required info.
-*/
+ * get the scan rate (scans per seconds)
+ * @param rate the scan rate
+ * @return true if able to get required info.
+ */
 bool RGBDSensorClient::getScanRate(double *rate)
 {
     return false;
 }
 /**
-* set the scan rate (scans per seconds)
-* @param rate the scan rate
-* @return true if message was correctly delivered to the HW device.
-*/
+ * set the scan rate (scans per seconds)
+ * @param rate the scan rate
+ * @return true if message was correctly delivered to the HW device.
+ */
 bool RGBDSensorClient::setScanRate(double rate)
 {
     return false;
@@ -463,16 +462,16 @@ bool RGBDSensorClient::getRGBDSensor_Status(RGBDSensor_status *status)
 }
 
 /**
-* Get the both the color and depth frame in a single call. Implementation should assure the best possible synchronization
-* is achieved accordingly to synch policy set by the user.
-* TimeStamps are referred to acquisition time of the corresponding piece of information.
-* If the device is not providing TimeStamps, then 'timeStamp' field should be set to '-1'.
-* @param colorFrame pointer to FlexImage data to hold the color frame from the sensor
-* @param depthFrame pointer to FlexImage data to hold the depth frame from the sensor
-* @param colorStamp pointer to memory to hold the Stamp of the color frame
-* @param depthStamp pointer to memory to hold the Stamp of the depth frame
-* @return true if able to get both data.
-*/
+ * Get the both the color and depth frame in a single call. Implementation should assure the best possible synchronization
+ * is achieved accordingly to synch policy set by the user.
+ * TimeStamps are referred to acquisition time of the corresponding piece of information.
+ * If the device is not providing TimeStamps, then 'timeStamp' field should be set to '-1'.
+ * @param colorFrame pointer to FlexImage data to hold the color frame from the sensor
+ * @param depthFrame pointer to FlexImage data to hold the depth frame from the sensor
+ * @param colorStamp pointer to memory to hold the Stamp of the color frame
+ * @param depthStamp pointer to memory to hold the Stamp of the depth frame
+ * @return true if able to get both data.
+ */
 bool RGBDSensorClient::getRGBD_Frames(yarp::sig::FlexImage &colorFrame, yarp::sig::FlexImage &depthFrame, yarp::os::Stamp *colorStamp, yarp::os::Stamp *depthStamp)
 {
     streamingReader.synchRead(colorFrame, depthFrame);
