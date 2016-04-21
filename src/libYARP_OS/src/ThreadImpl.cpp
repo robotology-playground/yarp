@@ -82,7 +82,11 @@ PLATFORM_THREAD_RETURN theExecutiveBranch (void *args)
 #if defined(__linux__)
         // Use the POSIX syscalls to get
         // the real thread ID (gettid) on Linux machine
+        #ifndef __ANDROID__
         thread->tid = (long) syscall(SYS_gettid);
+        #else
+        thread->tid = 0;
+        #endif
 #endif
 
         // c++11 std::thread, pthread and ace threads on some platforms do not

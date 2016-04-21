@@ -805,10 +805,25 @@ ConstString StoreDouble::toStringFlex() const
 
     // YARP Bug 2526259: Locale settings influence YARP behavior
     // Need to deal with alternate versions of the decimal point.
+#ifndef __ANDROID__
     struct lconv* lc = localeconv();
     size_t offset = str.find(lc->decimal_point);
     if (offset != ConstString::npos) {
         str[offset] = '.';
+#else
+    const char *decimalPoint;
+    #ifdef HAVE_LOCALECONV
+        struct lconv * lc=localeconv();
+        decimalPoint = lc->decimal_point;
+    #else
+        decimalPoint = getenv("LOCALE_DECIMAL_POINT");
+    #endif
+        if (!decimalPoint)
+            decimalPoint = ".";
+    size_t offset = str.find(decimalPoint);
+    if (offset!=String::npos){
+        str[offset]='.';
+#endif
     } else {
         str += ".0";
     }
@@ -837,8 +852,22 @@ void StoreDouble::fromString(const ConstString& src)
     ConstString tmp = src;
     size_t offset = tmp.find(".");
     if (offset != ConstString::npos) {
-        struct lconv* lc = localeconv();
-        tmp[offset] = lc->decimal_point[0];
+    #ifndef __ANDROID__
+       struct lconv* lc = localeconv();
+       tmp[offset] = lc->decimal_point[0];
+    #else
+        const char *decimalPoint;
+        #ifdef HAVE_LOCALECONV
+            struct lconv * lc=localeconv();
+            decimalPoint = lc->decimal_point;
+        #else
+            decimalPoint = getenv("LOCALE_DECIMAL_POINT");
+        #endif
+            if (!decimalPoint)
+                decimalPoint = ".";
+
+               tmp[offset] = decimalPoint[0];
+    #endif
     }
     x = ACE_OS::strtod(tmp.c_str(), NULL);
 }

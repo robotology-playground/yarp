@@ -31,7 +31,9 @@ using namespace yarp::os;
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <linux/if.h>
+#ifndef __ANDROID__
 #include <sys/statvfs.h>
+#endif
 #include <pwd.h>
 
 extern char **environ;
@@ -296,13 +298,14 @@ SystemInfo::StorageInfo SystemInfo::getStorageInfo()
     yarp::os::ConstString strHome = getUserInfo().homeDir; 
     if(!strHome.length())
         strHome = "/home";
-
+    #ifndef __ANDROID__
     struct statvfs vfs;
     if(statvfs(strHome.c_str(), &vfs) == 0)
     {
         storage.totalSpace = (int)(vfs.f_blocks*vfs.f_bsize/(1048576)); // in MB
         storage.freeSpace = (int)(vfs.f_bavail*vfs.f_bsize/(1048576));  // in MB
     }
+    #endif
 
 #endif
     return storage;
@@ -696,8 +699,10 @@ SystemInfo::ProcessInfo SystemInfo::getProcessInfo(int pid) {
 
     // scheduling params
     struct sched_param param;
+    #ifndef __ANDROID__
     if( sched_getparam(pid, &param) == 0 )
         info.schedPriority = param.__sched_priority;
+    #endif
     info.schedPolicy = sched_getscheduler(pid);
 
 #elif defined(WIN32)  

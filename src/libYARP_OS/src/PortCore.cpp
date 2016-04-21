@@ -2419,7 +2419,9 @@ bool PortCore::setProcessSchedulingParam(int priority, int policy) {
 #if defined(__linux__)
     // set the sched properties of all threads within the process
     struct sched_param sch_param;
+#ifndef __ANDROID__
     sch_param.__sched_priority = priority;
+#endif
 
     DIR *dir;
     char path[PATH_MAX];
