@@ -199,6 +199,22 @@ endmacro(print_dependency)
 option(SKIP_ACE "Compile YARP without ACE (Linux only, TCP only, limited functionality)" OFF)
 mark_as_advanced(SKIP_ACE)
 
+option(BUILD_ANDROID "Compile YARP for android)" OFF)
+mark_as_advanced(BUILD_ANDROID)
+
+#
+# FIXME: disable opencv, build Yarp static libraries, disable tools: yarpmanager, yarpdatadumper, etc.
+#
+if(BUILD_ANDROID)
+    set(CMAKE_C_FLAGS_${_CONFIG} "${CMAKE_C_FLAGS_${_CONFIG}} -D__ANDROID__")
+    set(CMAKE_CXX_FLAGS_${_CONFIG} "${CMAKE_CXX_FLAGS_${_CONFIG}} -D__ANDROID__")
+    set(SKIP_ACE ON CACHE INTERNAL "Compile YARP without ACE (Linux only, TCP only, limited functionality)")
+    set(CREATE_SHARED_LIBRARY OFF CACHE INTERNAL "Build static libraries")
+    set(YARP_COMPILE_EXECUTABLES OFF CACHE INTERNAL "Avoid building executables")
+else()
+    unset(SKIP_ACE CACHE)
+endif()
+
 
 option(CREATE_LIB_MATH "Create math library libYARP_math?" OFF)
 if(CREATE_LIB_MATH)
@@ -244,7 +260,11 @@ message(STATUS "CMake modules directory: ${CMAKE_MODULE_PATH}")
 
 if(SKIP_ACE)
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        set(ACE_LIBRARIES pthread rt dl)
+        if(BUILD_ANDROID)
+            set(ACE_LIBRARIES dl)
+        else()
+            set(ACE_LIBRARIES pthread rt dl)
+        endif()
     endif()
 else()
     find_package(ACE)

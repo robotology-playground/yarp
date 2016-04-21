@@ -34,7 +34,7 @@ public:
 #ifdef YARP_HAS_ACE
         return dll->error();
 #else
-        return dlerror();
+        return (char*) dlerror();
 #endif
     }
 

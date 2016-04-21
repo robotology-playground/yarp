@@ -28,7 +28,11 @@
 #  include <arpa/inet.h>
 #  include <sys/socket.h>
 #  include <netdb.h>
-#  include <ifaddrs.h>
+#   ifdef __ANDROID__
+#       include <yarp/os/impl/android/ifaddrs.h>
+#   else
+#       include <ifaddrs.h>
+#   endif
 #endif
 
 #include <stdio.h>

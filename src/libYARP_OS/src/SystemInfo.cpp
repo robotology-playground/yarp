@@ -21,7 +21,11 @@ using namespace yarp::os;
 #include <unistd.h>
 #include <sys/utsname.h>
 #include <sys/types.h>
-#include <ifaddrs.h>
+#   ifdef __ANDROID__
+#       include <yarp/os/impl/android/ifaddrs.h>
+#   else
+#       include <ifaddrs.h>
+#   endif
 #include <netinet/in.h> 
 #include <arpa/inet.h>
 #include <sys/ioctl.h>
@@ -603,7 +607,11 @@ SystemInfo::UserInfo SystemInfo::getUserInfo()
     if(pwd)
     {
         user.userName = pwd->pw_name;
+#ifdef __ANDROID__
+        user.realName = user.userName;
+#else
         user.realName = pwd->pw_gecos;
+#endif
         user.homeDir = pwd->pw_dir;
     }
 #endif

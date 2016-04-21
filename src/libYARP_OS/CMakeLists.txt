@@ -347,6 +347,11 @@ set(YARP_OS_SRCS src/AbstractCarrier.cpp
                  src/sha2.c
                  src/QosStyle.cpp)
 
+if(BUILD_ANDROID)
+    set(YARP_OS_IMPL_HDRS ${YARP_OS_IMPL_HDRS} include/yarp/os/impl/android/ifaddrs.h)
+    set(YARP_OS_SRCS ${YARP_OS_SRCS} src/android/ifaddrs.c)
+endif()
+
 if(NOT YARP_NO_DEPRECATED)
   set(YARP_OS_DEPRECATED_SRCS src/Module.cpp) # since YARP 2.3.65
   list(APPEND YARP_OS_SRCS ${YARP_OS_DEPRECATED_SRCS})
