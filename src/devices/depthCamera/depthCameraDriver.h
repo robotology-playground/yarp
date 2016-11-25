@@ -13,6 +13,7 @@
 #include <yarp/dev/FrameGrabberControl2.h>
 #include <yarp/os/RateThread.h>
 #include <yarp/sig/all.h>
+#include <yarp/sig/Matrix.h>
 #include <yarp/os/all.h>
 #include <yarp/os/Stamp.h>
 #include <yarp/dev/IRGBDSensor.h>
@@ -32,85 +33,16 @@ namespace yarp
     namespace dev
     {
         class depthCameraDriver;
+        namespace impl
+        {
+            class  streamFrameListener;
+            struct CameraParameters;
+            struct RGBDParam;
+            struct IntrinsicParams;
+            struct plum_bob;
+        }
     }
 }
-
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-
-struct plum_bob
-{
-    double k1;
-    double k2;
-    double t1;
-    double t2;
-    double k3;
-};
-
-struct intrinsicParams
-{
-    yarp::sig::Matrix retificationMatrix;
-    double            principalPointX;
-    double            principalPointY;
-    double            focalLenghtX;
-    double            focalLenghtY;
-    plum_bob          distortionModel;
-};
-
-struct RGBDParam
-{
-    RGBDParam() : name("unknown"), isSetting(false), isDescription(false), size(1)
-    {
-        val.resize(size);
-    }
-
-    std::string  name;
-    bool         isSetting;
-    bool         isDescription;
-    int          size;
-
-    std::vector<yarp::os::Value> val;
-};
-
-struct CameraParameters
-{
-    RGBDParam               clipPlanes;
-    RGBDParam               accuracy;
-    RGBDParam               depthRes;
-    RGBDParam               depth_Fov;
-    intrinsicParams         depthIntrinsic;
-
-    RGBDParam               rgbRes;
-    RGBDParam               rgb_Fov;
-    RGBDParam               rgbMirroring;
-    RGBDParam               depthMirroring;
-    intrinsicParams         rgbIntrinsic;
-    yarp::sig::Matrix       transformationMatrix;
-};
-
-class streamFrameListener : public openni::VideoStream::NewFrameListener
-{
-public:
-
-    //Properties
-    yarp::os::Mutex         mutex;
-    yarp::os::Stamp         stamp;
-    yarp::sig::FlexImage    image;
-    openni::PixelFormat     pixF;
-    int                     w, h;
-    size_t                  dataSize;
-    bool                    isReady;
-
-    //Method
-    streamFrameListener();
-    bool isValid(){return frameRef.isValid() & isReady;}
-    void destroy(){frameRef.release();}
-
-private:
-    virtual void onNewFrame(openni::VideoStream& stream);
-    openni::VideoFrameRef   frameRef;
-};
-#endif
 
 
 /**
@@ -329,24 +261,24 @@ private:
     //method
     inline bool initializeOpeNIDevice();
     inline bool setParams(const os::Bottle& settings, const os::Bottle& description);
-    inline bool parseIntrinsic(const yarp::os::Searchable& config, const std::string& groupName, intrinsicParams &params);
-    bool        getImage(FlexImage& Frame, Stamp* Stamp, streamFrameListener& sourceFrame);
-    bool        getImage(depthImage& Frame, Stamp* Stamp, streamFrameListener& sourceFrame);
+    inline bool parseIntrinsic(const yarp::os::Searchable& config, const std::string& groupName, impl::IntrinsicParams &params);
+    bool        getImage(FlexImage& Frame, Stamp* Stamp, impl::streamFrameListener *sourceFrame);
+    bool        getImage(depthImage& Frame, Stamp* Stamp, impl::streamFrameListener *sourceFrame);
     bool        setResolution(int w, int h, openni::VideoStream &stream);
     bool        setFOV(double horizontalFov, double verticalFov, openni::VideoStream &stream);
-    bool        setIntrinsic(yarp::os::Property& intrinsic, const intrinsicParams& values);
-    bool        checkParam(const os::Bottle& settings, const os::Bottle& description, RGBDParam& param);
-    bool        checkParam(const yarp::os::Bottle& input, RGBDParam &param, bool& found);
+    bool        setIntrinsic(yarp::os::Property& intrinsic, const impl::IntrinsicParams& values);
+    bool        checkParam(const os::Bottle& settings, const os::Bottle& description, impl::RGBDParam& param);
+    bool        checkParam(const yarp::os::Bottle& input, impl::RGBDParam &param, bool& found);
     void        settingErrorMsg(const std::string& error, bool& ret);
 
     //properties
-    openni::Device            m_device;
-    openni::VideoStream       m_depthStream;
-    openni::VideoStream       m_imageStream;
-    streamFrameListener       m_depthFrame;
-    streamFrameListener       m_imageFrame;
-    yarp::os::ConstString     m_lastError;
-    CameraParameters          m_cameraDescription;
+    openni::Device                  m_device;
+    openni::VideoStream             m_depthStream;
+    openni::VideoStream             m_imageStream;
+    impl::streamFrameListener      *m_depthFrame;
+    impl::streamFrameListener      *m_imageFrame;
+    yarp::os::ConstString           m_lastError;
+    impl::CameraParameters         *m_cameraDescription;
 
     std::vector<cameraFeature_id_t> m_supportedFeatures;
 #endif
