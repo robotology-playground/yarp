@@ -45,7 +45,7 @@ rpLidarCircularBuffer::~rpLidarCircularBuffer()
 
 bool RpLidar::open(yarp::os::Searchable& config)
 {
-    info = "Fake Laser device for test/debugging";
+    info = "RPLidar device";
     device_status = DEVICE_OK_STANBY;
 
 #ifdef LASER_DEBUG
@@ -54,7 +54,8 @@ bool RpLidar::open(yarp::os::Searchable& config)
 
     min_distance = 0.1; //m
     max_distance = 2.5;  //m
-
+    m_motor_control_enable = false;
+    m_scan_type = "normal";
     bool br = config.check("GENERAL");
     if (br != false)
     {
@@ -70,6 +71,14 @@ bool RpLidar::open(yarp::os::Searchable& config)
         min_angle = general_config.find("min_angle").asDouble();
         resolution = general_config.find("resolution").asDouble();
         do_not_clip_infinity_enable = (general_config.find("allow_infinity").asInt()!=0);
+        if (general_config.check("motor_control"))
+        {
+            m_motor_control_enable = (general_config.find("motor_control").asInt() == 1);
+        }
+        if (general_config.check("scan_type"))
+        {
+            m_scan_type = general_config.find("m_scan_type").asString();
+        }
     }
     else
     {
@@ -181,6 +190,7 @@ bool RpLidar::open(yarp::os::Searchable& config)
             yInfo("Sensor recovered from a previous error status");
         }
     }
+
     yInfo("Sensor ready");
 
 //     string info;
@@ -308,6 +318,15 @@ bool RpLidar::threadInit()
     yDebug("... done!\n");
 #endif
 
+    if (m_motor_control_enable)
+    {
+        if (!HW_motor_on())
+        {
+            yError("Unable to start motor!");
+            return false;
+        }
+    }
+    
     if (!HW_start())
     {
         yError("Unable to put sensor in scan mode!");
@@ -424,36 +443,139 @@ bool RpLidar::HW_reset()
     return true;
 }
 
+bool RpLidar::HW_motor_on()
+{
+    pSerial->flush();
+    unsigned char cmd_arr[6];
+    char checksum = 0;
+    cmd_arr[0] = 0xA5;
+    cmd_arr[1] = 0xF0;
+    cmd_arr[2] = 2;
+    cmd_arr[3] = 660 & 0xFF;
+    cmd_arr[4] = 660 >> 8;
+    checksum ^= cmd_arr[0];
+    checksum ^= cmd_arr[1];
+    checksum ^= cmd_arr[2];
+    checksum ^= cmd_arr[3];
+    checksum ^= cmd_arr[4];
+    cmd_arr[5] = checksum;
+    pSerial->send((char *)cmd_arr, 6);
+    return true;
+}
+
+bool RpLidar::HW_motor_off()
+{/*
+    pSerial->flush();
+    unsigned char cmd_arr[3];
+    cmd_arr[0] = 0xF0;
+    cmd_arr[1] = 0;
+    cmd_arr[2] = 0;
+    pSerial->send((char *)cmd_arr, 3);
+    return true;*/
+    pSerial->flush();
+    unsigned char cmd_arr[6];
+    char checksum = 0;
+    cmd_arr[0] = 0xA5;
+    cmd_arr[1] = 0xF0;
+    cmd_arr[2] = 2;
+    cmd_arr[3] = 0;
+    cmd_arr[4] = 0;
+    checksum ^= cmd_arr[0];
+    checksum ^= cmd_arr[1];
+    checksum ^= cmd_arr[2];
+    checksum ^= cmd_arr[3];
+    checksum ^= cmd_arr[4];
+    cmd_arr[5] = checksum;
+    pSerial->send((char *)cmd_arr, 6);
+    return true;
+}
+
 bool RpLidar::HW_start()
 {
     pSerial->flush();
 
     int r = 0;
 
-    unsigned char cmd_arr[2];
-    cmd_arr[0] = 0xA5;
-#ifdef FORCE_SCAN
-    cmd_arr[1] = 0x21;
-#else
-    cmd_arr[1] = 0x20;
-#endif
-    pSerial->send((char *)cmd_arr,2);
-
-    yarp::os::Time::delay(0.010);
-
-    unsigned char s[255];
-    memset(s, 0, 255);
-    r = pSerial->receiveBytes(s, 7);
-    if (r != 7)
+    if (m_scan_type == "normal")
     {
-        yError("Received answer with wrong length: %d", r);
-        return false;
+        unsigned char cmd_arr[2];
+        cmd_arr[0] = 0xA5;
+        cmd_arr[1] = 0x20;
+        pSerial->send((char *)cmd_arr, 2);
+        yarp::os::Time::delay(0.010);
+        unsigned char s[255];
+        memset(s, 0, 255);
+        r = pSerial->receiveBytes(s, 7);
+        if (r != 7)
+        {
+            yError("Received answer with wrong length: %d", r);
+            return false;
+        }
+        if ((unsigned char)s[0] != 0xA5 || (unsigned char)s[1] != 0x5A || (unsigned char)s[2] != 0x05 ||
+            (unsigned char)s[5] != 0x40 || (unsigned char)s[6] != 0x81)
+        {
+            yError("Invalid answer header");
+            return false;
+        }
     }
-
-    if ((unsigned char)s[0] != 0xA5 || (unsigned char)s[1] != 0x5A || (unsigned char)s[2] != 0x05 ||
-        (unsigned char)s[5] != 0x40 || (unsigned char)s[6] != 0x81)
+    else if (m_scan_type == "force")
     {
-        yError("Invalid answer header");
+        unsigned char cmd_arr[2];
+        cmd_arr[0] = 0xA5;
+        cmd_arr[1] = 0x21;
+        pSerial->send((char *)cmd_arr, 2);
+        yarp::os::Time::delay(0.010);
+        unsigned char s[255];
+        memset(s, 0, 255);
+        r = pSerial->receiveBytes(s, 7);
+        if (r != 7)
+        {
+            yError("Received answer with wrong length: %d", r);
+            return false;
+        }
+        if ((unsigned char)s[0] != 0xA5 || (unsigned char)s[1] != 0x5A || (unsigned char)s[2] != 0x05 ||
+            (unsigned char)s[5] != 0x40 || (unsigned char)s[6] != 0x81)
+        {
+            yError("Invalid answer header");
+            return false;
+        }
+    }
+    else if (m_scan_type=="express")
+    {
+        unsigned char cmd_arr[9];
+        cmd_arr[0] = 0xA5;
+        cmd_arr[1] = 0x82;
+        cmd_arr[2] = 0x05;
+        cmd_arr[3] = 0x0;
+        cmd_arr[4] = 0x0;
+        cmd_arr[5] = 0x0;
+        cmd_arr[6] = 0x0;
+        cmd_arr[7] = 0x0;
+        cmd_arr[8] = 0x22;
+        pSerial->send((char *)cmd_arr, 9);
+        yarp::os::Time::delay(0.010);
+        unsigned char s[255];
+        memset(s, 0, 255);
+        r = pSerial->receiveBytes(s, 7);
+        if (r != 7)
+        {
+            yError("Received answer with wrong length: %d", r);
+            return false;
+        }
+        if ((unsigned char)s[0] != 0xA5 || (unsigned char)s[1] != 0x5A || (unsigned char)s[2] != 0x54 ||
+            (unsigned char)s[5] != 0x40 || (unsigned char)s[6] != 0x82)
+        {
+            yError("Invalid answer header");
+            return false;
+        }
+        else
+        {
+            yInfo() << "HW_start() command successful!";
+        }
+    }
+    else
+    {
+        yError() << "Invalid scan type configuration!";
         return false;
     }
 
@@ -711,6 +833,14 @@ void RpLidar::run()
 
 void RpLidar::threadRelease()
 {
+    if (m_motor_control_enable)
+    {
+        if (!HW_motor_off())
+        {
+            yError("Unable to stop motor!");
+        }
+    }
+
 #ifdef LASER_DEBUG
     yDebug("RpLidar Thread releasing...");
     yDebug("... done.");

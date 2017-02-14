@@ -182,7 +182,8 @@ protected:
 
     std::string info;
     Device_status device_status;
-
+    std::string m_scan_type;
+    bool m_motor_control_enable;
     yarp::sig::Vector laser_data;
 
 public:
@@ -228,7 +229,8 @@ private:
     bool  HW_start();
     bool  HW_stop();
     bool  HW_getInfo(std::string& s_info);
-
+    bool  HW_motor_on();
+    bool  HW_motor_off();
 };
 
 #endif
