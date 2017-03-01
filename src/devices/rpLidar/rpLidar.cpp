@@ -64,9 +64,9 @@ bool RpLidar::open(yarp::os::Searchable& config)
         clip_min_enable = general_config.check("clip_min");
         if (clip_max_enable) { max_distance = general_config.find("clip_max").asDouble(); }
         if (clip_min_enable) { min_distance = general_config.find("clip_min").asDouble(); }
-        if (general_config.check("max_angle") == false) { yError() << "Missing max_angle param"; return false; }
-        if (general_config.check("min_angle") == false) { yError() << "Missing min_angle param"; return false; }
-        if (general_config.check("resolution") == false) { yError() << "Missing resolution param"; return false; }
+        if (general_config.check("max_angle") == false) { yError() << "Missing max_angle param in GENERAL group"; return false; }
+        if (general_config.check("min_angle") == false) { yError() << "Missing min_angle param in GENERAL group"; return false; }
+        if (general_config.check("resolution") == false) { yError() << "Missing resolution param in GENERAL group"; return false; }
         max_angle = general_config.find("max_angle").asDouble();
         min_angle = general_config.find("min_angle").asDouble();
         resolution = general_config.find("resolution").asDouble();
@@ -77,7 +77,7 @@ bool RpLidar::open(yarp::os::Searchable& config)
         }
         if (general_config.check("scan_type"))
         {
-            m_scan_type = general_config.find("m_scan_type").asString();
+            m_scan_type = general_config.find("scan_type").asString();
         }
     }
     else
@@ -134,7 +134,7 @@ bool RpLidar::open(yarp::os::Searchable& config)
     bool ok = general_config.check("Serial_Configuration");
     if (!ok)
     {
-        yError("Cannot find configuration file for serial port communication!");
+        yError("Cannot find Serial_Configuration param in GENERAL group (configuration file for serial port communication!)");
         return false;
     }
     yarp::os::ConstString serial_filename = general_config.find("Serial_Configuration").asString();
