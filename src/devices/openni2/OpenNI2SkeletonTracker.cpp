@@ -262,11 +262,7 @@ int OpenNI2SkeletonTracker::init(){
                    cout << "RGB stream mirroring: OFF" << endl;
                }
             }
-
             cameraSettings = imageStream.getCameraSettings();
-            cameraSettings->setAutoExposureEnabled(AUTO_EXPOSURE);
-            cameraSettings->setAutoWhiteBalanceEnabled(AUTO_WHITE_BALANCE);
-
             cameraSettings->setExposure(EXPOSURE_VALUE);
             if (rc != openni::STATUS_OK)
             {
@@ -370,6 +366,17 @@ int OpenNI2SkeletonTracker::init(){
             cout << "Recorder started..." << endl;
         }
     }
+
+
+    // white balance start-up routine: Activate it for a few seconds to
+    // adapt it to the scene, and then freeze it
+    cameraSettings->setAutoExposureEnabled(true);
+    cameraSettings->setAutoWhiteBalanceEnabled(true);
+
+    yarp::os::Time::delay(2);
+
+    cameraSettings->setAutoExposureEnabled(false);
+    cameraSettings->setAutoWhiteBalanceEnabled(false);
 
     return rc;
 }

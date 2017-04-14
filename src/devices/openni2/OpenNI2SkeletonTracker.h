@@ -19,6 +19,7 @@
 
 #include <yarp/sig/Vector.h>
 #include <yarp/sig/Image.h>
+#include <yarp/os/Time.h>
 
 //included so that the enumeration can be accessed
 #include <yarp/dev/IOpenNI2DeviceDriver.h>
