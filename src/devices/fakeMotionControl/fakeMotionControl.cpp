@@ -31,6 +31,9 @@ using namespace yarp::math;
 
 void FakeMotionControl::run()
 {
+    double elapsed=yarp::os::Time::now()-prev_time;
+    prev_time=yarp::os::Time::now();
+    
     for (int i=0;i <_njoints ;i++)
     {
         if (_controlModes[i] == VOCAB_CM_VELOCITY)
@@ -38,7 +41,7 @@ void FakeMotionControl::run()
             //increment joint position
             if (this->_command_speeds[i]!=0)
             {
-                double elapsed = yarp::os::Time::now()-prev_time;
+                
                 double increment = _command_speeds[i]*elapsed;
                 pos[i]+=increment;
             }
@@ -54,7 +57,6 @@ void FakeMotionControl::run()
             //increment joint position
             if (this->refpwm[i]!=0)
             {
-                double elapsed = yarp::os::Time::now()-prev_time;
                 double increment = refpwm[i]*elapsed*PWM_CONSTANT;
                 pos[i]+=increment;
             }
@@ -71,8 +73,18 @@ void FakeMotionControl::run()
         }
         else if (_controlModes[i] == VOCAB_CM_POSITION)
         {
-             pos[i] = _posCtrl_references[i];
              //do something with _ref_speeds[i];
+             
+             double increment=_ref_speeds[i]*elapsed;
+             
+             if (pos[i]<_posCtrl_references[i])
+             {
+                pos[i]+=increment;
+             }
+             else if (pos[i]>_posCtrl_references[i])
+             {
+                pos[i]-=increment;
+             }
         }
         else if (_controlModes[i] == VOCAB_CM_IDLE)
         {
@@ -87,8 +99,11 @@ void FakeMotionControl::run()
             //unsupported control mode
             yWarning() << "Unsupported control mode, joint " << i << " " << yarp::os::Vocab::decode(_controlModes[i]);
         }
+        
+        vel[i]=(pos[i]-pos_old[i])/elapsed;
+        
+        pos_old[i]=pos[i];
     }
-    prev_time = yarp::os::Time::now();
 }
 
 static inline bool NOT_YET_IMPLEMENTED(const char *txt)
@@ -149,6 +164,7 @@ bool FakeMotionControl::extractGroup(Bottle &input, Bottle &out, const std::stri
 void FakeMotionControl::resizeBuffers()
 {
     pos.resize(_njoints);
+    pos_old.resize(_njoints);
     dpos.resize(_njoints);
     vel.resize(_njoints);
     speed.resize(_njoints);
@@ -168,6 +184,7 @@ void FakeMotionControl::resizeBuffers()
     last_pwm_command.resize(_njoints);
 
     pos.zero();
+    pos_old.zero();
     dpos.zero();
     vel.zero();
     speed.zero();
@@ -1855,18 +1872,21 @@ bool FakeMotionControl::velocityMoveRaw(const double *sp)
 bool FakeMotionControl::setCalibrationParametersRaw(int j, const CalibrationParameters& params)
 {
     yTrace() << "setCalibrationParametersRaw for joint" << j;
+    setControlModeRaw(j, VOCAB_CM_POSITION);
     return true;
 }
 
 bool FakeMotionControl::calibrateAxisWithParamsRaw(int j, unsigned int type, double p1, double p2, double p3)
 {
     yTrace() << "calibrateRaw for joint" << j;
+    setControlModeRaw(j, VOCAB_CM_POSITION);
+
     return true;
 }
 
 bool FakeMotionControl::calibrationDoneRaw(int axis)
 {
-    bool result = false;
+    bool result = true;
 
     return result;
 }
@@ -2071,7 +2091,9 @@ bool FakeMotionControl::getRefAccelerationsRaw(double *accs)
 
 bool FakeMotionControl::stopRaw(int j)
 {
-    return false;
+    _ref_speeds[j] = 0.0;
+    
+    return true;
 }
 
 bool FakeMotionControl::stopRaw()
@@ -2336,7 +2358,7 @@ bool FakeMotionControl::getEncodersRaw(double *encs)
 bool FakeMotionControl::getEncoderSpeedRaw(int j, double *sp)
 {
     // To avoid returning uninitialized memory, we set the encoder speed to 0
-    *sp = 0.0;
+    *sp = vel[j];
     return true;
 }
 
@@ -2615,7 +2637,10 @@ bool FakeMotionControl::setLimitsRaw(int j, double min, double max)
 
 bool FakeMotionControl::getLimitsRaw(int j, double *min, double *max)
 {
-    return false;
+    *min = -120.0*182.044;
+    *max =  120.0*182.044;
+
+    return true;
 }
 
 bool FakeMotionControl::getGearboxRatioRaw(int j, double *gearbox)
@@ -2720,7 +2745,7 @@ bool FakeMotionControl::setVelLimitsRaw(int axis, double min, double max)
 bool FakeMotionControl::getVelLimitsRaw(int axis, double *min, double *max)
 {
     *min = 0.0;
-    *max = _maxJntCmdVelocity[axis];
+    *max = 60.0*182.044; //_maxJntCmdVelocity[axis];
     return true;
 }
 

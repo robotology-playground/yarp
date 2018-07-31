@@ -319,6 +319,11 @@ private:
 
     std::string         partName;               // to open ports and print more detailed debug messages
 
+    yarp::dev::ISafeControl *isafectrl;
+    int*                     wrapp2robot;
+    int*                     robot2wrapp;
+    int                      nJoints;
+
     int               controlledJoints;
     int               base;         // to be removed
     int               top;          // to be removed

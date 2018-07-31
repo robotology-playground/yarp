@@ -24,6 +24,8 @@ using namespace yarp::dev::impl;
 using namespace yarp::sig;
 using namespace std;
 
+#define UNMAPPED (-1)
+
 // needed for the driver factory.
 yarp::dev::DriverCreator *createControlBoardWrapper()
 {
@@ -50,6 +52,10 @@ ControlBoardWrapper::ControlBoardWrapper() :yarp::os::PeriodicThread(0.02),
     rosMsgCounter = 0;
     useROS = ROS_disabled;
     jointNames.clear();
+    isafectrl = NULL;
+    
+    robot2wrapp = NULL;
+    wrapp2robot = NULL;
 }
 
 void ControlBoardWrapper::cleanup_yarpPorts()
@@ -71,7 +77,11 @@ void ControlBoardWrapper::cleanup_yarpPorts()
     rpcData.destroy();
 }
 
-ControlBoardWrapper::~ControlBoardWrapper() { }
+ControlBoardWrapper::~ControlBoardWrapper() 
+{ 
+    if (wrapp2robot) delete [] wrapp2robot;
+    if (robot2wrapp) delete [] robot2wrapp;
+}
 
 bool ControlBoardWrapper::close()
 {
@@ -432,6 +442,40 @@ bool ControlBoardWrapper::open(Searchable& config)
     {
         yDebug() << "ControlBoardWrapper2: 'period' parameter missing, using default thread period = 20ms";
         period = 0.02;
+    }
+
+    // NOW, check for correct parameter, so if both are present we use the correct one
+    if(prop.check("joints"))
+    {
+        nJoints = prop.find("joints").asInt();
+    }
+    else
+    {
+        yError() << "ControlBoardWrapper2: 'joints' parameter missing";
+        return false;
+    }
+    
+    if(prop.check("safejointmap"))
+    {
+        yarp::os::Bottle &wrapp2robotBot = prop.findGroup("safejointmap");
+        
+        robot2wrapp = new int[nJoints];
+        wrapp2robot = new int[nJoints];
+        
+        for (int j = 0; j < nJoints; ++j)
+        {
+            robot2wrapp[j] = UNMAPPED;
+            wrapp2robot[j] = UNMAPPED;
+        }
+        
+        int size = wrapp2robotBot.size()-1;
+        
+        for (int w = 0; w < size; ++w)
+        {
+            wrapp2robot[w] = wrapp2robotBot.get(w+1).asInt();
+        
+            robot2wrapp[wrapp2robot[w]] = w;
+        }
     }
 
     // check if we need to create subdevice or if they are
@@ -797,6 +841,13 @@ bool ControlBoardWrapper::attachAll(const PolyDriverList &polylist)
             polylist[p]->poly->view(calibrator);
 
             IRemoteCalibrator::setCalibratorDevice(calibrator);
+            continue;
+        }
+
+        if (tmpKey == "SelfCollisionCheck")
+        {
+            polylist[p]->poly->view(isafectrl);
+
             continue;
         }
 
@@ -1445,6 +1496,16 @@ bool ControlBoardWrapper::positionMove(int j, double ref) {
     if (!p)
         return false;
 
+    if (isafectrl)
+    {
+        int r = wrapp2robot[j];
+            
+        if (r != UNMAPPED)
+        {
+            isafectrl->checkPosition(&ref, &r, 1);
+        }
+    }
+    
     if (p->pos)
     {
         return p->pos->positionMove(off+p->base, ref);
@@ -1460,6 +1521,47 @@ bool ControlBoardWrapper::positionMove(int j, double ref) {
 bool ControlBoardWrapper::positionMove(const double *refs)
 {
     bool ret = true;
+    
+    double pos_refs[64];
+    
+    for (int j = 0; j < nJoints; ++j)
+    {
+        pos_refs[j] = refs[j];
+    }
+    
+    if (isafectrl)
+    {
+        int safe_map[64];
+        
+        int back_map[64];
+        
+        int n_mapped = 0;
+        
+        double safe_pos_refs[64];
+        
+        for (int j = 0; j < nJoints; ++j)
+        {
+            int r = wrapp2robot[j];
+            
+            if (r != UNMAPPED)
+            {
+                safe_map[n_mapped] = r;
+                
+                back_map[n_mapped] = j;
+                
+                safe_pos_refs[n_mapped++] = pos_refs[j];
+            }
+        }
+        
+        if (!isafectrl->checkPosition(safe_pos_refs, safe_map, n_mapped))
+        {
+            for (int n = 0; n < n_mapped; ++n)
+            {
+                pos_refs[back_map[n]] = safe_pos_refs[n];
+            }
+        }
+    }
+
     int j_wrap = 0;         // index of the wrapper joint
 
     int nDev = device.subdevices.size();
@@ -1484,7 +1586,8 @@ bool ControlBoardWrapper::positionMove(const double *refs)
                 joints[j_dev] = p->base + j_dev;  // for all joints is equivalent to add offset term
             }
 
-            ret = ret && p->pos->positionMove(wrapped_joints, joints, &refs[j_wrap]);
+            ret = ret && p->pos->positionMove(wrapped_joints, joints, &pos_refs[j_wrap]);
+            
             j_wrap+=wrapped_joints;
         }
         else   // Classic Position Control
@@ -1495,7 +1598,7 @@ bool ControlBoardWrapper::positionMove(const double *refs)
                 for(int j_dev = 0; j_dev < wrapped_joints; j_dev++, j_wrap++)
                 {
                     int off=device.lut[j_wrap].offset;
-                    ret=ret && p->pos->positionMove(p->base+off, refs[j_wrap]);
+                    ret=ret && p->pos->positionMove(p->base+off, pos_refs[j_wrap]);
                 }
             }
             else
@@ -1521,6 +1624,48 @@ bool ControlBoardWrapper::positionMove(const int n_joints, const int *joints, co
 {
     bool ret = true;
 
+    double pos_refs[64];
+    
+    for (int n = 0; n < n_joints; ++n)
+    {
+        pos_refs[n] = refs[n];
+    }
+    
+    if (isafectrl)
+    {
+        int safe_map[64];
+        
+        int back_map[64];
+        
+        double safe_pos_refs[64];
+        
+        int n_mapped = 0; 
+        
+        for (int n = 0; n < n_joints; ++n)
+        {
+            int j = joints[n];
+            
+            int r = wrapp2robot[j];
+            
+            if (r != UNMAPPED)
+            {
+                safe_map[n_mapped] = r;
+                
+                back_map[n_mapped] = j;
+                
+                safe_pos_refs[n_mapped++] = pos_refs[n];
+            }
+        }
+        
+        if (!isafectrl->checkPosition(safe_pos_refs, safe_map, n_mapped))
+        {
+            for (int n = 0; n < n_mapped; ++n)
+            {
+                pos_refs[back_map[n]] = safe_pos_refs[n];
+            }
+        }
+    }
+    
     rpcDataMutex.lock();
     //Reset subdev_jointsVectorLen vector
     memset(rpcData.subdev_jointsVectorLen, 0x00, sizeof(int) * rpcData.deviceNum);
@@ -1531,7 +1676,7 @@ bool ControlBoardWrapper::positionMove(const int n_joints, const int *joints, co
     {
         subIndex = device.lut[joints[j]].deviceEntry;
         rpcData.jointNumbers[subIndex][rpcData.subdev_jointsVectorLen[subIndex]] = device.lut[joints[j]].offset + rpcData.subdevices_p[subIndex]->base;
-        rpcData.values[subIndex][rpcData.subdev_jointsVectorLen[subIndex]] = refs[j];
+        rpcData.values[subIndex][rpcData.subdev_jointsVectorLen[subIndex]] = pos_refs[j];
         rpcData.subdev_jointsVectorLen[subIndex]++;
     }
 
@@ -2533,6 +2678,16 @@ bool ControlBoardWrapper::velocityMove(int j, double v) {
     if (!p)
         return false;
 
+    if (isafectrl)
+    {
+        int r = wrapp2robot[j];
+        
+        if (r != UNMAPPED)
+        {
+            isafectrl->checkVelocity(&v, &r, 1);
+        }
+    }
+    
     if (p->vel)
     {
         return p->vel->velocityMove(off+p->base, v);
@@ -2543,6 +2698,48 @@ bool ControlBoardWrapper::velocityMove(int j, double v) {
 bool ControlBoardWrapper::velocityMove(const double *v)
 {
     bool ret = true;
+    
+    double vel_refs[64];
+    
+    for (int j = 0; j < nJoints; ++j)
+    {
+        vel_refs[j] = v[j];
+    }
+    
+    if (isafectrl)
+    {
+        int safe_map[64];
+        
+        int back_map[64];
+        
+        double safe_vel_refs[64];
+        
+        int n_mapped = 0; 
+        
+        for (int j = 0; j < nJoints; ++j)
+        {
+            int r = wrapp2robot[j];
+            
+            if (r != UNMAPPED)
+            {
+                safe_map[n_mapped] = r;
+                
+                back_map[n_mapped] = j;
+                
+                safe_vel_refs[n_mapped++] = vel_refs[j];
+            }
+        }
+        
+        if (!isafectrl->checkVelocity(safe_vel_refs, safe_map, n_mapped))
+        {
+            for (int n = 0; n < n_mapped; ++n)
+            {
+                vel_refs[back_map[n]] = safe_vel_refs[n];
+            }
+        }
+    }
+    
+    
     int j_wrap = 0;         // index of the wrapper joint
 
     for(unsigned int subDev_idx=0; subDev_idx < device.subdevices.size(); subDev_idx++)
@@ -2563,7 +2760,8 @@ bool ControlBoardWrapper::velocityMove(const double *v)
                 joints[j_dev] = p->base + j_dev;
             }
 
-            ret = ret && p->vel->velocityMove(wrapped_joints, joints, &v[j_wrap]);
+            ret = ret && p->vel->velocityMove(wrapped_joints, joints, &vel_refs[j_wrap]);
+
             j_wrap += wrapped_joints;
         }
         else   // Classic Position Control
@@ -2573,7 +2771,7 @@ bool ControlBoardWrapper::velocityMove(const double *v)
                 for(int j_dev = 0; j_dev < wrapped_joints; j_dev++, j_wrap++)
                 {
                     int off=device.lut[j_wrap].offset;
-                    ret=ret && p->vel->velocityMove(p->base+off, v[j_wrap]);
+                    ret=ret && p->vel->velocityMove(p->base+off, vel_refs[j_wrap]);
                 }
             }
             else
@@ -4395,6 +4593,16 @@ bool ControlBoardWrapper::setPosition(int j, double ref)
     if (!p)
         return false;
 
+    if (isafectrl)
+    {
+        int r = wrapp2robot[j];
+        
+        if (r != UNMAPPED)
+        {
+            isafectrl->checkPosition(&ref, &r, 1);
+        }
+    }
+    
     if (p->posDir)
     {
         return p->posDir->setPosition(off+p->base, ref);
@@ -4407,6 +4615,51 @@ bool ControlBoardWrapper::setPositions(const int n_joints, const int *joints, co
 {
     bool ret = true;
 
+    double dpos_refs[64];
+    
+    for (int n = 0; n < n_joints; ++n)
+    {
+        dpos_refs[n] = dpos[n];
+    }
+    
+    if (isafectrl)
+    {
+        int safe_map[64];
+        
+        int back_map[64];
+        
+        double safe_dpos_refs[64];
+        
+        int n_mapped = 0; 
+        
+        for (int n = 0; n < n_joints; ++n)
+        {
+            int j = joints[n];
+            
+            int r = wrapp2robot[j];
+            
+            if (r != UNMAPPED)
+            {
+                safe_map[n_mapped] = r;
+                
+                back_map[n_mapped] = j;
+                
+                safe_dpos_refs[n_mapped++] = dpos_refs[n];
+            }
+        }
+        
+        if (!isafectrl->checkVelocity(safe_dpos_refs, safe_map, n_mapped))
+        {
+            for (int n = 0; n < n_mapped; ++n)
+            {
+                int j = back_map[n];
+                
+                dpos_refs[j] = safe_dpos_refs[n];
+            }
+        }
+    }
+    
+    
     rpcDataMutex.lock();
     //Reset subdev_jointsVectorLen vector
     memset(rpcData.subdev_jointsVectorLen, 0x00, sizeof(int) * rpcData.deviceNum);
@@ -4419,7 +4672,7 @@ bool ControlBoardWrapper::setPositions(const int n_joints, const int *joints, co
         int offset = device.lut[joints[j]].offset;
         int base = rpcData.subdevices_p[subIndex]->base;
         rpcData.jointNumbers[subIndex][rpcData.subdev_jointsVectorLen[subIndex]] =  offset + base;
-        rpcData.values[subIndex][rpcData.subdev_jointsVectorLen[subIndex]] = dpos[j];
+        rpcData.values[subIndex][rpcData.subdev_jointsVectorLen[subIndex]] = dpos_refs[j];
         rpcData.subdev_jointsVectorLen[subIndex]++;
     }
 
@@ -4444,6 +4697,48 @@ bool ControlBoardWrapper::setPositions(const double *refs)
 {
     bool ret=true;
 
+    double pos_refs[64];
+    
+    for (int j = 0; j < nJoints; ++j)
+    {
+        pos_refs[j] = refs[j];
+    }
+    
+    if (isafectrl)
+    {
+        int safe_map[64];
+        
+        int back_map[64];
+        
+        double safe_pos_refs[64];
+        
+        int n_mapped = 0; 
+        
+        for (int j = 0; j < nJoints; ++j)
+        {
+            int r = wrapp2robot[j];
+            
+            if (r != UNMAPPED)
+            {
+                safe_map[n_mapped] = r;
+                
+                back_map[n_mapped] = j;
+                
+                safe_pos_refs[n_mapped++] = pos_refs[j];
+            }
+        }
+        
+        if (!isafectrl->checkPosition(safe_pos_refs, safe_map, n_mapped))
+        {
+            for (int n = 0; n < n_mapped; ++n)
+            {
+                int j = back_map[n];
+                
+                pos_refs[j] = safe_pos_refs[n];
+            }
+        }
+    }
+    
     for(int l=0;l<controlledJoints;l++)
     {
         int off=device.lut[l].offset;
@@ -4455,7 +4750,7 @@ bool ControlBoardWrapper::setPositions(const double *refs)
 
         if (p->posDir)
         {
-            ret = p->posDir->setPosition(off+p->base, refs[l]) && ret;
+            ret = p->posDir->setPosition(off+p->base, pos_refs[l]) && ret;
         }
         else
             ret=false;
@@ -4583,6 +4878,50 @@ bool ControlBoardWrapper::velocityMove(const int n_joints, const int *joints, co
 {
     bool ret = true;
 
+    double spds_refs[64];
+    
+    for (int n = 0; n < n_joints; ++n)
+    {
+        spds_refs[n] = spds[n];
+    }
+    
+    if (isafectrl)
+    {
+        int safe_map[64];
+        
+        int back_map[64];
+        
+        double safe_spds_refs[64];
+        
+        int n_mapped = 0; 
+        
+        for (int n = 0; n < n_joints; ++n)
+        {
+            int j = joints[n];
+            
+            int r = wrapp2robot[j];
+            
+            if (r != UNMAPPED)
+            {
+                safe_map[n_mapped] = r;
+                
+                back_map[n_mapped] = j;
+                
+                safe_spds_refs[n_mapped] = spds_refs[n];
+                
+                ++n_mapped;
+            }
+        }
+        
+        if (!isafectrl->checkPosition(safe_spds_refs, safe_map, n_mapped))
+        {
+            for (int n = 0; n < n_mapped; ++n)
+            {
+                spds_refs[back_map[n]] = safe_spds_refs[n];
+            }
+        }
+    }
+    
     rpcDataMutex.lock();
     //Reset subdev_jointsVectorLen vector
     memset(rpcData.subdev_jointsVectorLen, 0x00, sizeof(int) * rpcData.deviceNum);
@@ -4593,7 +4932,7 @@ bool ControlBoardWrapper::velocityMove(const int n_joints, const int *joints, co
     {
         subIndex = device.lut[joints[j]].deviceEntry;
         rpcData.jointNumbers[subIndex][rpcData.subdev_jointsVectorLen[subIndex]] = device.lut[joints[j]].offset + rpcData.subdevices_p[subIndex]->base;
-        rpcData.values[subIndex][rpcData.subdev_jointsVectorLen[subIndex]] = spds[j];
+        rpcData.values[subIndex][rpcData.subdev_jointsVectorLen[subIndex]] = spds_refs[j];
         rpcData.subdev_jointsVectorLen[subIndex]++;
     }
 

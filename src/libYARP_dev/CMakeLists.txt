@@ -83,6 +83,7 @@ set(YARP_dev_HDRS include/yarp/dev/all.h
                   include/yarp/dev/IRemoteVariables.h
                   include/yarp/dev/IRGBDSensor.h
                   include/yarp/dev/IRobotDescription.h
+                  include/yarp/dev/ISafeControl.h
                   include/yarp/dev/ITorqueControl.h
                   include/yarp/dev/IVelocityControl2.h
                   include/yarp/dev/IVelocityControl.h
