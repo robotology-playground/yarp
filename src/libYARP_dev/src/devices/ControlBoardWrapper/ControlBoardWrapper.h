@@ -30,6 +30,7 @@
 #include <yarp/sig/Vector.h>
 #include <yarp/os/Mutex.h>
 #include <yarp/dev/Wrapper.h>
+#include <yarp/dev/ISafeControl.h>
 
 #include <string>
 #include <vector>
